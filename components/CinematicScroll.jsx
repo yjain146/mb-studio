@@ -2,6 +2,7 @@
 
 import { useRef } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
+import Image from 'next/image';
 
 export default function CinematicScroll() {
   const containerRef = useRef(null);
@@ -11,35 +12,59 @@ export default function CinematicScroll() {
     offset: ["start start", "end end"]
   });
 
-  // STACKING MATH: 
-  // Image 1 fades out between 25% and 33% of the scroll
-  const bg1Opacity = useTransform(scrollYProgress, [0.25, 0.33], [1, 0]);
-  // Image 2 fades out between 58% and 66% of the scroll
-  const bg2Opacity = useTransform(scrollYProgress, [0.58, 0.66], [1, 0]);
-  // Image 3 is permanently at opacity 1 in the background.
+  // THE "PEEL AWAY" STACK METHOD
+  // We use strict 4-point arrays so the opacity locks at 0 and never reverts.
+  const bg1Opacity = useTransform(scrollYProgress, [0, 0.25, 0.35, 1], [1, 1, 0, 0]);
+  const bg2Opacity = useTransform(scrollYProgress, [0, 0.60, 0.70, 1], [1, 1, 0, 0]);
 
   return (
     <div ref={containerRef} className="relative bg-[#030303]">
       
-      {/* STICKY BACKGROUND STACK */}
-      <div className="sticky top-0 h-screen w-full overflow-hidden pointer-events-none">
-        {/* Bottom Card */}
-        <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('/amg-seq-3.jpg')" }} />
+      {/* STICKY BACKGROUND STACK - Using dvh prevents mobile scroll crashes */}
+      <div className="sticky top-0 h-[100dvh] w-full overflow-hidden pointer-events-none bg-black">
         
-        {/* Middle Card */}
-        <motion.div style={{ opacity: bg2Opacity, backgroundImage: "url('/amg-seq-2.jpg')" }} className="absolute inset-0 bg-cover bg-center will-change-opacity" />
+        {/* Base Layer: Image 3 (Stays permanently at opacity 1) */}
+        <div className="absolute inset-0 z-0">
+          <Image 
+            src="/amg-seq-3.jpg" 
+            alt="AMG GT XX Vision" 
+            fill 
+            priority
+            className="object-cover"
+          />
+        </div>
         
-        {/* Top Card */}
-        <motion.div style={{ opacity: bg1Opacity, backgroundImage: "url('/amg-seq-1.jpg')" }} className="absolute inset-0 bg-cover bg-center will-change-opacity" />
+        {/* Middle Layer: Image 2 (Fades out to reveal Image 3) */}
+        <motion.div style={{ opacity: bg2Opacity }} className="absolute inset-0 z-10 will-change-opacity">
+          <Image 
+            src="/amg-seq-2.jpg" 
+            alt="AMG GT XX Record Run" 
+            fill 
+            priority
+            className="object-cover"
+          />
+        </motion.div>
         
-        <div className="absolute inset-0 bg-gradient-to-b from-black/90 via-black/40 to-[#030303]" />
+        {/* Top Layer: Image 1 (Fades out to reveal Image 2) */}
+        <motion.div style={{ opacity: bg1Opacity }} className="absolute inset-0 z-20 will-change-opacity">
+          <Image 
+            src="/amg-seq-1.jpg" 
+            alt="Concept AMG GT XX" 
+            fill 
+            priority
+            className="object-cover"
+          />
+        </motion.div>
+        
+        {/* Dark Gradient Overlay */}
+        <div className="absolute inset-0 z-30 bg-gradient-to-b from-black/90 via-black/40 to-[#030303]" />
       </div>
 
       {/* NATURAL SCROLLING TEXT BLOCKS */}
-      <div className="relative z-10 -mt-[100vh]">
+      <div className="relative z-40 -mt-[100dvh]">
         
         {/* Screen 1 */}
-        <div className="h-[100vh] flex flex-col justify-center px-8 md:px-16 max-w-[1600px] mx-auto">
+        <div className="h-[100dvh] flex flex-col justify-center px-8 md:px-16 max-w-[1600px] mx-auto">
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
             <span className="inline-block px-3 py-1 bg-black/50 backdrop-blur-md border border-white/10 text-[9px] tracking-[0.3em] uppercase text-white mb-6">
               Over 1,000 kW / 1,360 hp • 900 kW DC Charging
@@ -54,7 +79,7 @@ export default function CinematicScroll() {
         </div>
 
         {/* Screen 2 */}
-        <div className="h-[100vh] flex flex-col justify-center px-8 md:px-16 max-w-[1600px] mx-auto">
+        <div className="h-[100dvh] flex flex-col justify-center px-8 md:px-16 max-w-[1600px] mx-auto">
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ amount: 0.5 }}>
             <h2 style={{ fontFamily: 'var(--font-serif)' }} className="text-5xl md:text-7xl font-light text-white mb-6">Record Run.</h2>
             <p className="font-mono text-[10px] tracking-[0.2em] uppercase text-white/70 max-w-xl mb-12">
@@ -73,8 +98,8 @@ export default function CinematicScroll() {
           </motion.div>
         </div>
 
-        {/* Screen 3 - Increased height to 150vh and aligned to top so it stays on screen longer */}
-        <div className="h-[150vh] flex flex-col justify-start pt-[30vh] px-8 md:px-16 max-w-[1600px] mx-auto">
+        {/* Screen 3 */}
+        <div className="h-[150dvh] flex flex-col justify-start pt-[30dvh] px-8 md:px-16 max-w-[1600px] mx-auto">
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ amount: 0.3 }}>
             <h2 style={{ fontFamily: 'var(--font-serif)' }} className="text-5xl md:text-7xl font-light text-white mb-6">A Vision in Orange.</h2>
             <p className="font-mono text-[10px] tracking-[0.2em] uppercase text-white/70 max-w-xl mb-12 leading-relaxed">
